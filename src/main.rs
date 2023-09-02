@@ -6,7 +6,7 @@ mod config;
 mod events;
 mod files;
 
-fn main() -> Result<(), Box<dyn Error>>{
+fn main() -> Result<(), Box<dyn Error>> {
     println!("Hello there!");
 
     println!("Reading the config");
@@ -15,7 +15,7 @@ fn main() -> Result<(), Box<dyn Error>>{
     println!("Making request and processing JSON");
     let url = events::create_url(config.cal_num, config.from, config.to);
     let events = events::do_request_and_parse(url.as_str());
-    
+
     println!("Exporting iCal");
     let out_str = export_events(&events);
 
@@ -26,4 +26,3 @@ fn main() -> Result<(), Box<dyn Error>>{
     println!("By LastaApps 2023");
     Ok(())
 }
-

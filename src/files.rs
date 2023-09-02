@@ -5,4 +5,3 @@ pub fn save_calendar(file_name: &str, data: &str) -> std::io::Result<()> {
     file.write_all(data.as_bytes())?;
     Ok(())
 }
-

@@ -1,4 +1,4 @@
-use chrono::{NaiveDate, Utc, Duration, DateTime};
+use chrono::{DateTime, Duration, NaiveDate, Utc};
 use config_file::FromConfigFile;
 use serde::Deserialize;
 
@@ -10,16 +10,17 @@ struct ConfigDto {
     filename: String,
 }
 
-impl ConfigDto {
-    fn to_domain(self) -> Config {
+impl From<ConfigDto> for Config {
+    fn from(val: ConfigDto) -> Self {
         Config {
-            cal_num: self.cal_num,
-            from: ConfigDto::parse_date(&self.from),
-            to: ConfigDto::parse_date(&self.to),
-            filename: self.filename,
+            cal_num: val.cal_num,
+            from: ConfigDto::parse_date(&val.from),
+            to: ConfigDto::parse_date(&val.to),
+            filename: val.filename,
         }
     }
-
+}
+impl ConfigDto {
     fn parse_date(date: &str) -> DateTime<Utc> {
         let date = NaiveDate::parse_from_str(date, "%Y-%m-%d").unwrap();
         let date_time = date.and_hms_milli_opt(0, 0, 0, 0).unwrap();
@@ -68,10 +69,9 @@ pub fn load_config() -> Config {
     }
 
     if let Some(cfg) = cfg_dto {
-        cfg.to_domain()
+        cfg.into()
     } else {
         println!("Using the default config");
         Config::default()
     }
 }
-

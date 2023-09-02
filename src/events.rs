@@ -31,39 +31,44 @@ pub struct Event {
     pub total_seats: Option<u32>,
 }
 
-impl EventsDto {
-    fn to_domain(self) -> Vec<Event> {
-        self.events.into_iter().map(|e| e.to_domain()).collect()
+impl From<EventsDto> for Vec<Event> {
+    fn from(val: EventsDto) -> Self {
+        val.events.into_iter().map(|e| e.into()).collect()
     }
 }
 
-impl EventDto {
-    fn to_domain(self) -> Event {
+impl From<EventDto> for Event {
+    fn from(val: EventDto) -> Self {
         Event {
-            id: self.id,
-            title: self.title,
-            start: self.start as u64,
-            end: self.end as u64,
-            coach: self.coach,
-            room: self.room,
-            free_seats: self.free_seats,
-            total_seats: self.total_seats,
+            id: val.id,
+            title: val.title,
+            start: val.start as u64,
+            end: val.end as u64,
+            coach: val.coach,
+            room: val.room,
+            free_seats: val.free_seats,
+            total_seats: val.total_seats,
         }
     }
 }
 
 pub fn create_url(cal_num: u32, from: DateTime<Utc>, to: DateTime<Utc>) -> String {
-    format!("https://admin.hopitude.com/api/v1/calendar/workout-events/club/{}/?from={}&to={}", cal_num, from.timestamp_millis(), to.timestamp_millis())
+    format!(
+        "https://admin.hopitude.com/api/v1/calendar/workout-events/club/{}/?from={}&to={}",
+        cal_num,
+        from.timestamp_millis(),
+        to.timestamp_millis()
+    )
 }
 
 pub fn do_request_and_parse(url: &str) -> Vec<Event> {
     let request = reqwest::blocking::get(url).unwrap();
     let json: EventsDto = request.json().unwrap();
 
-    json.to_domain()
+    json.into()
 }
 
-pub fn export_events(events: &Vec<Event>) -> String {
+pub fn export_events(events: &[Event]) -> String {
     let mut calendar = Calendar::new();
 
     for event in events.iter() {
@@ -105,4 +110,3 @@ pub fn export_events(events: &Vec<Event>) -> String {
 
     calendar.done().to_string()
 }
-
