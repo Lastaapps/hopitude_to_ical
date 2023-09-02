@@ -7,14 +7,16 @@ struct ConfigDto {
     cal_num: u32,
     from: String,
     to: String,
+    filename: String,
 }
 
 impl ConfigDto {
-    fn to_domain(&self) -> Config {
+    fn to_domain(self) -> Config {
         Config {
             cal_num: self.cal_num,
             from: ConfigDto::parse_date(&self.from),
             to: ConfigDto::parse_date(&self.to),
+            filename: self.filename,
         }
     }
 
@@ -30,6 +32,7 @@ pub struct Config {
     pub cal_num: u32,
     pub from: u64,
     pub to: u64,
+    pub filename: String,
 }
 
 pub fn load_config() -> Config {

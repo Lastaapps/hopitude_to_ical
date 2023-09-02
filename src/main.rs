@@ -1,9 +1,8 @@
 use crate::events::export_events;
 
-
 mod config;
 mod events;
-
+mod files;
 
 fn main() {
     println!("Hello, there!");
@@ -19,6 +18,9 @@ fn main() {
     
     println!("Exporting iCal");
     let out_str = export_events(&events);
+
+    println!("Storing data");
+    files::save_calendar(&config.filename, out_str.as_str());
 
     println!("Done, see you");
 }
