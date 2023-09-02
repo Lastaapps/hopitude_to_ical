@@ -1,3 +1,6 @@
+use chrono::prelude::Utc;
+use chrono::{DateTime, NaiveDateTime};
+use icalendar::{Calendar, Class, Component, EventLike, Property};
 use serde::Deserialize;
 
 #[derive(Deserialize)]
@@ -30,10 +33,7 @@ pub struct Event {
 
 impl EventsDto {
     fn to_domain(self) -> Vec<Event> {
-        self.events
-            .into_iter()
-            .map(|e| e.to_domain())
-            .collect()
+        self.events.into_iter().map(|e| e.to_domain()).collect()
     }
 }
 
@@ -57,5 +57,48 @@ pub fn do_request_and_parse(url: &str) -> Vec<Event> {
     let json: EventsDto = request.json().unwrap();
 
     json.to_domain()
+}
+
+pub fn export_events(events: &Vec<Event>) -> String {
+    let mut calendar = Calendar::new();
+
+    for event in events.iter() {
+        let seats_str = match (event.free_seats, event.total_seats) {
+            (Some(f), Some(t)) => format!(" {}/{}", f, t),
+            (Some(f), None) => format!(" {}", f),
+            (None, Some(t)) => format!(" {}", t),
+            (None, None) => String::new(),
+        };
+
+        let room_text = match &event.room {
+            Some(room) => room.as_str(),
+            None => "",
+        };
+
+        let start: DateTime<Utc> = {
+            let datetime = NaiveDateTime::from_timestamp_millis(event.start as i64).unwrap();
+            DateTime::from_naive_utc_and_offset(datetime, Utc)
+        };
+        let end: DateTime<Utc> = {
+            let datetime = NaiveDateTime::from_timestamp_millis(event.end as i64).unwrap();
+            DateTime::from_naive_utc_and_offset(datetime, Utc)
+        };
+
+        let mut cal_ev = icalendar::Event::new();
+        cal_ev
+            .summary(format!("{}{}", event.title, seats_str).as_str())
+            .description(format!("{}{}", event.coach.as_str(), room_text,).as_str())
+            .class(Class::Public)
+            .starts(start)
+            .ends(end);
+
+        if let Some(room) = &event.room {
+            cal_ev.append_property(Property::new("LOCATION", room).done());
+        };
+
+        calendar.push(cal_ev.done());
+    }
+
+    calendar.done().to_string()
 }
 
