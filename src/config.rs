@@ -1,4 +1,4 @@
-use chrono::NaiveDate;
+use chrono::{NaiveDate, Utc, Duration, DateTime};
 use config_file::FromConfigFile;
 use serde::Deserialize;
 
@@ -20,29 +20,42 @@ impl ConfigDto {
         }
     }
 
-    fn parse_date(date: &str) -> u64 {
+    fn parse_date(date: &str) -> DateTime<Utc> {
         let date = NaiveDate::parse_from_str(date, "%Y-%m-%d").unwrap();
-        date.and_hms_milli_opt(0, 0, 0, 0)
-            .unwrap()
-            .timestamp_millis() as u64
+        let date_time = date.and_hms_milli_opt(0, 0, 0, 0).unwrap();
+        DateTime::from_naive_utc_and_offset(date_time, Utc)
     }
 }
 
 pub struct Config {
     pub cal_num: u32,
-    pub from: u64,
-    pub to: u64,
+    pub from: DateTime<Utc>,
+    pub to: DateTime<Utc>,
     pub filename: String,
 }
 
+impl Config {
+    fn default() -> Config {
+        Config {
+            cal_num: 66,
+            // yeah, I know that this is not ideal, but good enough
+            from: (Utc::now() - Duration::days(31)),
+            to: Utc::now() + Duration::days(365),
+            filename: String::from("hopitude.ical"),
+        }
+    }
+}
+
 pub fn load_config() -> Config {
-    let directories = ["hopitude.toml", "~/.config/hopitude.toml"];
+    let directories = ["hopitude.toml"];
 
     let mut cfg_dto: Option<ConfigDto> = None;
 
     for dir in directories {
+        println!("Trying {}", dir);
         match ConfigDto::from_config_file(dir) {
             Ok(cfg) => {
+                println!("Config found!");
                 cfg_dto = Some(cfg);
                 break;
             }
@@ -53,11 +66,12 @@ pub fn load_config() -> Config {
             },
         };
     }
-    let cfg = if let Some(cfg) = cfg_dto {
-        cfg
-    } else {
-        panic!("No config file found!");
-    };
 
-    cfg.to_domain()
+    if let Some(cfg) = cfg_dto {
+        cfg.to_domain()
+    } else {
+        println!("Using the default config");
+        Config::default()
+    }
 }
+

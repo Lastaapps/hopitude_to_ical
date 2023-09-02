@@ -52,6 +52,10 @@ impl EventDto {
     }
 }
 
+pub fn create_url(cal_num: u32, from: DateTime<Utc>, to: DateTime<Utc>) -> String {
+    format!("https://admin.hopitude.com/api/v1/calendar/workout-events/club/{}/?from={}&to={}", cal_num, from.timestamp_millis(), to.timestamp_millis())
+}
+
 pub fn do_request_and_parse(url: &str) -> Vec<Event> {
     let request = reqwest::blocking::get(url).unwrap();
     let json: EventsDto = request.json().unwrap();
@@ -64,9 +68,9 @@ pub fn export_events(events: &Vec<Event>) -> String {
 
     for event in events.iter() {
         let seats_str = match (event.free_seats, event.total_seats) {
-            (Some(f), Some(t)) => format!(" {}/{}", f, t),
-            (Some(f), None) => format!(" {}", f),
-            (None, Some(t)) => format!(" {}", t),
+            (Some(f), Some(t)) => format!(" {}/{}", t - f, t),
+            (Some(f), None) => format!(" {} free", f),
+            (None, Some(t)) => format!(" {} places", t),
             (None, None) => String::new(),
         };
 
