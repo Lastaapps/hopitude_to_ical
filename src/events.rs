@@ -1,5 +1,7 @@
 use chrono::prelude::Utc;
+use chrono::TimeZone;
 use chrono::{DateTime, NaiveDateTime};
+use chrono_tz::Europe::Tallinn;
 use icalendar::{Calendar, Class, Component, EventLike, Property};
 use serde::Deserialize;
 
@@ -86,11 +88,17 @@ pub fn export_events(events: &[Event]) -> String {
 
         let start: DateTime<Utc> = {
             let datetime = NaiveDateTime::from_timestamp_millis(event.start as i64).unwrap();
-            DateTime::from_naive_utc_and_offset(datetime, Utc)
+            Tallinn
+                .from_local_datetime(&datetime)
+                .unwrap()
+                .with_timezone(&Utc)
         };
         let end: DateTime<Utc> = {
             let datetime = NaiveDateTime::from_timestamp_millis(event.end as i64).unwrap();
-            DateTime::from_naive_utc_and_offset(datetime, Utc)
+            Tallinn
+                .from_local_datetime(&datetime)
+                .unwrap()
+                .with_timezone(&Utc)
         };
 
         let mut cal_ev = icalendar::Event::new();
