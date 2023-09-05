@@ -16,7 +16,7 @@ struct EventDto {
     title: String,
     start: f64,
     end: f64,
-    coach: String,
+    coach: Option<String>,
     room: Option<String>,
     free_seats: Option<u32>,
     total_seats: Option<u32>,
@@ -27,7 +27,7 @@ pub struct Event {
     pub title: String,
     pub start: u64,
     pub end: u64,
-    pub coach: String,
+    pub coach: Option<String>,
     pub room: Option<String>,
     pub free_seats: Option<u32>,
     pub total_seats: Option<u32>,
@@ -81,11 +81,6 @@ pub fn export_events(events: &[Event]) -> String {
             (None, None) => String::new(),
         };
 
-        let room_text = match &event.room {
-            Some(room) => room.as_str(),
-            None => "",
-        };
-
         let start: DateTime<Utc> = {
             let datetime = NaiveDateTime::from_timestamp_millis(event.start as i64).unwrap();
             Tallinn
@@ -104,13 +99,15 @@ pub fn export_events(events: &[Event]) -> String {
         let mut cal_ev = icalendar::Event::new();
         cal_ev
             .summary(format!("{}{}", event.title, seats_str).as_str())
-            .description(format!("{}{}", event.coach.as_str(), room_text,).as_str())
             .class(Class::Public)
             .starts(start)
             .ends(end);
 
         if let Some(room) = &event.room {
             cal_ev.append_property(Property::new("LOCATION", room).done());
+        };
+        if let Some(coach) = &event.coach {
+            cal_ev.description(format!("{}", coach.as_str()).as_str());
         };
 
         calendar.push(cal_ev.done());
